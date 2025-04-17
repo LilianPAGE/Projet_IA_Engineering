@@ -1,18 +1,22 @@
 ## 📁 Requirement:
 
-pip install flask flask-cors
-pip install flask-cors
+### A installer
 
-pip install --upgrade google-cloud-texttospeech
-pip install google-cloud-texttospeech
+- pip install flask flask-cors
+- pip install flask-cors
 
-pip install huggingface_hub
-pip install python-dotenv
+- pip install --upgrade google-cloud-texttospeech
+- pip install google-cloud-texttospeech
 
-Ajouter une api key nebius dans le fichier config.json
+- pip install huggingface_hub
+- pip install python-dotenv
 
-Ajouter le fichier google key du cloud
+### Import des API key
 
+- Ajouter une api key nebius dans le fichier config.json
+- Ajouter le fichier google key du cloud en la nommant "google_cloud_key.json"
+
+### Lancer le server
 Lancer de serveur avec:  python app.py
 
 
