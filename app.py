@@ -6,6 +6,7 @@ from dotenv import load_dotenv  # Importer load_dotenv pour charger les variable
 from google.cloud import texttospeech
 import uuid
 import re
+import json
 
 # Charger les variables d'environnement depuis le fichier .env
 load_dotenv()  # Charger les variables d'environnement
@@ -21,10 +22,14 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = google_cloud_key  # Définir la c
 app = Flask(__name__)
 CORS(app)
 
-# Initialiser le client HuggingFace avec la clé API à partir des variables d'environnement
+# Load configuration from a JSON file
+with open("config.json", "r") as config_file:
+    config = json.load(config_file)
+
+# Initialize the InferenceClient using the loaded configuration
 client = InferenceClient(
-    provider="nebius",
-    api_key=os.getenv("API_KEY")  # Clé API HuggingFace depuis .env
+    provider=config["provider"],
+    api_key=config["api_key"]
 )
 
 # Donner le contexte général
