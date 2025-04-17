@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #081e41;
+      background: #17293D;
       margin: 0;
       padding: 20px;
       display: flex;
@@ -15,6 +15,16 @@
       align-items: center;
     }
 
+    .fiche {
+      color: white;
+      background: #213a57;
+
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      width: 300px;
+      margin-top: 20px;
+    }
     h1 {
       color: #ffffff;
       margin-bottom: 10px;
@@ -196,7 +206,16 @@
         </div>
       </div>
     </div>
+    <div class="fiche" id="fiche">
+      <h3>Fiche Scammer</h3>
+      <p><strong>Nom :</strong> <span id="fiche-nom">–</span></p>
+      <p><strong>Adresse :</strong> <span id="fiche-adresse">–</span></p>
+      <p><strong>Email/Lien :</strong> <span id="fiche-email">–</span></p>
+      <p><strong>Banque / Code :</strong> <span id="fiche-banque">–</span></p>
+    </div>
   </div>
+  <p class="fiche"><strong>Infos potentiellement utiles:</strong> <span id="fiche-combined">–</span></p>
+
   <script>
 
     function resetMichel() {
@@ -218,6 +237,11 @@
       const message = input.value.trim();
       const instruction = instructionInput.value.trim();
       if (!message) return;
+      extraireInfos(message);
+      if (message.includes("ciel")) {
+        var audio = new Audio('./test.mp3'); // Remplacer 'key.mp3' par le chemin vers ton fichier
+        audio.play();
+      }
 
       // Affichage utilisateur
       const chatBox = document.getElementById("chatBox");
@@ -365,6 +389,37 @@
     document.getElementById("msgInput").addEventListener("keydown", function (e) {
       if (e.key === "Enter") sendMessage();
     });
+
+
+    async function extraireInfos(texte) {
+      const response = await fetch("http://localhost:5000/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: texte })
+      });
+
+      const data = await response.json();
+
+      // Si une info n'est pas déjà présente, on met à jour la fiche
+      if (!document.getElementById('fiche-nom').textContent || document.getElementById('fiche-nom').textContent === '–') {
+        document.getElementById('fiche-nom').textContent = data.name || '–';
+      }
+
+      if (!document.getElementById('fiche-adresse').textContent || document.getElementById('fiche-adresse').textContent === '–') {
+        document.getElementById('fiche-adresse').textContent = data.address || '–';
+      }
+
+      if (!document.getElementById('fiche-email').textContent || document.getElementById('fiche-email').textContent === '–') {
+        document.getElementById('fiche-email').textContent = data.email || '–';
+      }
+
+      if (!document.getElementById('fiche-banque').textContent || document.getElementById('fiche-banque').textContent === '–') {
+        document.getElementById('fiche-banque').textContent = data.iban || '–';
+      }
+      document.getElementById('fiche-combined').textContent += data.combined_info || 'Informations combinées non trouvées';
+    }
+
+
   </script>
 </body>
 

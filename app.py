@@ -7,6 +7,9 @@ from google.cloud import texttospeech
 import uuid
 import re
 import json
+import spacy
+
+nlp = spacy.load("fr_core_news_md")
 
 # Charger les variables d'environnement depuis le fichier .env
 load_dotenv()  # Charger les variables d'environnement
@@ -88,6 +91,61 @@ def chat():
         return jsonify({"reply": "Erreur interne"}), 500
 
 
+@app.route('/extract', methods=['POST'])
+def extract_info():
+    data = request.json
+    text = data.get('text', '')
+
+    # Traiter le texte avec SpaCy
+    doc = nlp(text)
+
+    # Dictionnaire pour stocker les données extraites
+    extracted_data = {
+        "name": None,
+        "address": None,
+        "email": None,
+        "iban": None,
+        "combined_info": ""
+    }
+
+    # Extraction des entités nommées
+    for ent in doc.ents:
+        if ent.label_ == "PER" and not extracted_data["name"]:
+            extracted_data["name"] = ent.text
+            extracted_data["combined_info"] += f"Nom: {ent.text}, "
+        if ent.label_ == "GPE" and not extracted_data["address"]:
+            # Ajout de la ville dans l'adresse
+            extracted_data["address"] = ent.text
+            extracted_data["combined_info"] += f"Adresse: {ent.text}, "
+        
+    # Extraction de l'email avec une expression régulière
+    email_pattern = r'[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}'
+    email_match = re.search(email_pattern, text)
+    if email_match and not extracted_data["email"]:
+        extracted_data["email"] = email_match.group(0)
+        extracted_data["combined_info"] += f"Email: {email_match.group(0)}, "
+
+    # Extraction de l'IBAN
+    iban_pattern = r'FR\d{2}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{3}'
+    iban_match = re.search(iban_pattern, text)
+    if iban_match and not extracted_data["iban"]:
+        extracted_data["iban"] = iban_match.group(0)
+        extracted_data["combined_info"] += f"IBAN: {iban_match.group(0)}, "
+
+    # Recherche d'un format d'adresse postale plus précis (ex : numéro, rue, code postal)
+    address_keywords = ["rue", "boulevard", "avenue", "impasse", "place", "code postal", "CP", "BP"]
+    for sent in doc.sents:
+        if any(keyword in sent.text.lower() for keyword in address_keywords):
+            if not extracted_data["address"]:
+                extracted_data["address"] = sent.text
+                extracted_data["combined_info"] += f"Adresse complète: {sent.text}, "
+
+    # Si aucune donnée n'a été trouvée pour le champ, on ajoute une valeur par défaut
+    if not extracted_data["combined_info"]:
+        extracted_data["combined_info"] = "Aucune information trouvée."
+
+    return jsonify(extracted_data)
+
 
 
 tts_client = texttospeech.TextToSpeechClient()
@@ -110,6 +168,7 @@ def tts():
         text = re.sub(r"\[expiration\]", "<break time='1.2s'/>", text)
         text = re.sub(r"\[silence\]", "<break time='0.5s'/>", text)
         text = re.sub(r"\[long silence\]", "<break time='1s'/>", text)
+        text = re.sub(r"\[suspicion\]", "<prosody rate='slow'>hein</prosody><break time='700ms'/>", text)
 
                 # Encapsule tout dans une balise <speak> pour le SSML
         ssml_text = f"<speak>{text}</speak>"

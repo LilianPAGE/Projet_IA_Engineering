@@ -1,5 +1,27 @@
 
 
+### A installer
+
+- pip install flask flask-cors
+- pip install flask-cors
+
+- pip install --upgrade google-cloud-texttospeech
+- pip install google-cloud-texttospeech
+
+- pip install huggingface_hub
+- pip install python-dotenv
+
+- pip install spacy
+- python -m spacy download fr_core_news_md
+
+### Import des API key
+
+- Ajouter une api key nebius dans le fichier config.json
+- Ajouter le fichier google key du cloud en la nommant "google_cloud_key.json"
+
+### Lancer le server
+Lancer de serveur avec:  python app.py
+
 
 # 🎣 AntiScam AI — Faire perdre du temps aux arnaqueurs téléphoniques
 
