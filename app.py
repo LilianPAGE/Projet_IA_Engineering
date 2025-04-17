@@ -55,6 +55,15 @@ messages=[
 @app.route("/chat", methods=["POST"])
 def chat():
     user_input = request.json.get("message")
+    prompt_modification = request.json.get("instruction", "")  # nouvelle instruction facultative
+
+    # Injecter la consigne dans le contexte si fournie
+    if prompt_modification:
+        messages.append({
+            "role": "system",
+            "content": f"[MODIFICATION TEMPO] : {prompt_modification}"
+        })
+
     messages.append({"role": "user", "content": user_input})
 
     try:
@@ -75,11 +84,8 @@ def chat():
         return jsonify({"reply": full_reply})
 
     except Exception as e:
-        print("❌ Erreur API HuggingFace :", e)  # log pour debug
-        return jsonify({"reply": '''J. Vérifier l'existence du répertoire /tmp/
-Le répertoire /tmp/ est généralement utilisé pour stocker des fichiers temporaires, mais il peut ne pas exister ou ne pas être accessible sur certains systèmes. Tu peux essayer de vérifier si ce répertoire existe et si ton application a les permissions nécessaires pour y écrire.
-
-Tu peux ajouter une ligne pour vérifier et créer le répertoire si nécessaire :'''}), 200
+        print("❌ Erreur API HuggingFace :", e)
+        return jsonify({"reply": "Erreur interne"}), 500
 
 
 

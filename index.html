@@ -15,32 +15,47 @@
       align-items: center;
     }
 
+    h1 {
+      color: #ffffff;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .main-layout {
+      display: flex;
+      width: 100%;
+      max-width: 1000px;
+      gap: 30px;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .left-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 300px;
+    }
+
     #avatar-container {
       transition: transform 0.2s ease-in-out;
+      margin-bottom: 10px;
     }
 
     #michel-avatar.talking {
       animation: bounce 0.3s infinite;
     }
 
-
-    @keyframes bounce {
-      0% {
-        transform: translateY(0);
-      }
-
-      50% {
-        transform: translateY(-4px);
-      }
-
-      100% {
-        transform: translateY(0);
-      }
+    #instructionInput {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
     }
 
-    h1 {
-      color: #ffffff;
-      margin-bottom: 10px;
+    .chat-column {
+      flex: 1;
     }
 
     .chat-container {
@@ -48,7 +63,6 @@
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       width: 100%;
-      max-width: 600px;
       height: 500px;
       display: flex;
       flex-direction: column;
@@ -111,13 +125,6 @@
       background-color: #008f5a;
     }
 
-    .typing {
-      font-style: italic;
-      color: #888;
-      margin-top: 5px;
-      font-size: 14px;
-    }
-
     .voice-button {
       background-color: #ff9800;
       color: white;
@@ -127,11 +134,39 @@
       border-radius: 8px;
       cursor: pointer;
       transition: background-color 0.3s;
-      margin-left: 10px;
     }
 
     .voice-button:hover {
       background-color: #e68900;
+    }
+
+    .stop-button {
+      background-color: #6c757d;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .stop-button:hover {
+      background-color: #5a6268;
+    }
+
+    @keyframes bounce {
+      0% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-4px);
+      }
+
+      100% {
+        transform: translateY(0);
+      }
     }
   </style>
 </head>
@@ -141,21 +176,27 @@
   <button onclick="resetMichel()"
     style="margin-bottom: 20px; background:#dc3545; color:white; padding:10px 16px; border:none; border-radius:8px; cursor:pointer;">🧹
     Réinitialiser Michel</button>
-  <div id="avatar-container" style="margin-bottom: 20px;">
-    <img id="michel-avatar" src="antiscam.png" alt="Michel" width="320" />
-  </div>
 
-  <div class="chat-container">
-    <div class="chat-box" id="chatBox"></div>
-    <div class="input-area">
-      <input type="text" id="msgInput" placeholder="Entrez le message de l'escroc" />
-      <button onclick="sendMessage()">Envoyer</button>
-      <button class="voice-button" onclick="startVoiceRecognition()">🎤</button>
-      <button class="stop-button" onclick="stopAudio()">⏹️ Arrêter l'audio</button>
+  <div class="main-layout">
+    <div class="left-column">
+      <div id="avatar-container">
+        <img id="michel-avatar" src="antiscam.png" alt="Michel" width="280" />
+      </div>
+      <input type="text" id="instructionInput" placeholder="Modifier les consignes de Michel..." />
+    </div>
 
+    <div class="chat-column">
+      <div class="chat-container">
+        <div class="chat-box" id="chatBox"></div>
+        <div class="input-area">
+          <input type="text" id="msgInput" placeholder="Entrez le message de l'escroc" />
+          <button onclick="sendMessage()">Envoyer</button>
+          <button class="voice-button" onclick="startVoiceRecognition()">🎤</button>
+          <button class="stop-button" onclick="stopAudio()">⏹️</button>
+        </div>
+      </div>
     </div>
   </div>
-
   <script>
 
     function resetMichel() {
@@ -171,42 +212,38 @@
         });
     }
 
-    // Fonction pour envoyer un message
     async function sendMessage() {
       const input = document.getElementById("msgInput");
-      const chatBox = document.getElementById("chatBox");
+      const instructionInput = document.getElementById("instructionInput");
       const message = input.value.trim();
+      const instruction = instructionInput.value.trim();
       if (!message) return;
 
+      // Affichage utilisateur
+      const chatBox = document.getElementById("chatBox");
       chatBox.innerHTML += `<div class="msg user">${message}</div>`;
       chatBox.innerHTML += `<div class="typing" id="typing">Michel réfléchit...</div>`;
       chatBox.scrollTop = chatBox.scrollHeight;
       input.value = "";
-      console.log("Message envoyé :", message);
-      if (message.includes("ciel")) {
-        var audio = new Audio('./test.mp3'); // Remplacer 'key.mp3' par le chemin vers ton fichier
-        audio.play();
-      }
 
       try {
         const res = await fetch("http://localhost:5000/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message })
+          body: JSON.stringify({ message, instruction })
         });
 
         const data = await res.json();
         document.getElementById("typing").remove();
         chatBox.innerHTML += `<div class="msg bot">${data.reply}</div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
-
-        // Lire la réponse de Michel
         readTextAloud(data.reply);
       } catch (err) {
         document.getElementById("typing").remove();
         chatBox.innerHTML += `<div class="msg bot" style="color:red;">Erreur : ${err.message}</div>`;
       }
     }
+
 
     let recognition = null;
     let isListening = false;
