@@ -109,15 +109,15 @@ On utilise la méthode **os.environ** pour définir la clé Google dans l’envi
 
 ## 🗃️ Structure du projet
 
-📁 racine du projet
-│
-├── app.py                   # Serveur Flask
-├── config.json              # Fichier de configuration 
-├── google_cloud_key.json    # Clé privée Google Cloud
-├── antiscam.png             # Image de l’avatar de l’IA (au repos)
-├── antiscam_talking.png     # Image de l’avatar quand l’IA parle 
-├── index.html               # Interface utilisateur 
-├── README.md                # Rapport + explication
+#### 📁 racine du projet
+
+- `app.py` : Serveur Flask principal
+- `config.json` : Fichier de configuration contenant la clé API Nebius
+- `google_cloud_key.json` : Clé privée Google Cloud pour le service Text-to-Speech *(à ne pas versionner)*
+- `antiscam.png` : Image de l’avatar de l’IA lorsqu'elle est au repos
+- `antiscam_talking.png` : Image de l’avatar de l’IA lorsqu'elle parle
+- `index.html` : Interface utilisateur (frontend)
+- `README.md` : Rapport et documentation du projet
 
 ---
 
