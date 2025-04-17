@@ -1,23 +1,4 @@
-## 📁 Requirement:
 
-### A installer
-
-- pip install flask flask-cors
-- pip install flask-cors
-
-- pip install --upgrade google-cloud-texttospeech
-- pip install google-cloud-texttospeech
-
-- pip install huggingface_hub
-- pip install python-dotenv
-
-### Import des API key
-
-- Ajouter une api key nebius dans le fichier config.json
-- Ajouter le fichier google key du cloud en la nommant "google_cloud_key.json"
-
-### Lancer le server
-Lancer de serveur avec:  python app.py
 
 
 # 🎣 AntiScam AI — Faire perdre du temps aux arnaqueurs téléphoniques
@@ -73,6 +54,82 @@ L'IA est incarnée sous la forme suivante :
 ### 🔹 Lapsus
 > Tu dois faire des lapsus et des erreurs de langage. Tu parles à voix haute donc tu ajoutes les pauses et hésitaton sous la forme [pause] [euh] [hum] [hésitation] [long silence] [silence] [inspiration] [expiration]. Tu reformules parfois et tu cherches tes mots. Tu fais des répétitions et tu te contredis parfois.
 ---
+
+## 📁 Requirement:
+
+### Installations nécessaire :
+
+- pip install flask flask-cors
+- pip install flask-cors
+
+- pip install --upgrade google-cloud-texttospeech
+- pip install google-cloud-texttospeech
+
+- pip install huggingface_hub
+- pip install python-dotenv
+
+### Import des API key
+
+- Ajouter une api key nebius dans le fichier config.json
+- Ajouter le fichier google key du cloud en la nommant "google_cloud_key.json"
+
+### Lancer le server
+
+- Lancer de serveur avec:  python app.py
+
+---
+
+## 🌐 Backend — app.py
+
+Le backend est développé avec Flask, un micro-framework Python. Il joue le rôle de serveur API pour gérer les interactions entre l'interface utilisateur (dans le navigateur) et les services d'IA utilisés (génération de texte, synthèse vocale).
+
+**Génération de texte** : On utilise l'API **Hugging Face** (via Nebius) pour générer les réponses de l'IA. Le prompt est construit de manière à simuler un personnage crédible et cohérent.
+
+**Text-to-Speech** : On utilise **Google Cloud Text-to-Speech** pour convertir les réponses de l'IA en audio, afin de simuler une vraie voix humaine.
+
+**Endpoints :**
+
+  /generate_text : reçoit le texte de la conversation et renvoie une réponse générée.
+
+  /text_to_speech : reçoit une réponse texte et renvoie un fichier .mp3 avec la voix générée.
+
+  /start_conversation (optionnel) : initialise une session avec des infos sur le personnage.
+
+---
+
+## 🔐 Gestion des clés API
+
+La clé **Nebius** est stockée dans un fichier config.json pour éviter de l’écrire en dur dans le code.
+
+La clé **Google Cloud** est importée via le fichier google_cloud_key.json (non versionné sur GitHub).
+
+On utilise la méthode **os.environ** pour définir la clé Google dans l’environnement lors du démarrage du script.
+
+---
+
+## 🗃️ Structure du projet
+
+📁 racine du projet
+│
+├── app.py                   # Serveur Flask
+├── config.json              # Fichier de configuration 
+├── google_cloud_key.json    # Clé privée Google Cloud
+├── antiscam.png             # Image de l’avatar de l’IA (au repos)
+├── antiscam_talking.png     # Image de l’avatar quand l’IA parle 
+├── index.html               # Interface utilisateur 
+├── README.md                # Rapport + explication
+
+---
+
+## 🎛️ Pourquoi ces choix techniques ?
+
+Flask est léger, rapide à mettre en place, parfait pour un prototype ou un projet étudiant.
+
+Hugging Face permet de générer des réponses très naturelles, et Nebius fournit une passerelle simple pour l'utiliser via API.
+
+Google Text-to-Speech offre une voix réaliste en français, avec de nombreuses possibilités de personnalisation (ton, vitesse, genre...).
+
+Le personnage est simulé entièrement en prompt engineering, sans fine-tuning, pour plus de simplicité.
 
 
 
