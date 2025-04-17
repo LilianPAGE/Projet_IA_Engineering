@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Michel CASPER – Chat Anti-Arnaque</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #081e41;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #avatar-container {
+      transition: transform 0.2s ease-in-out;
+    }
+
+    #michel-avatar.talking {
+      animation: bounce 0.3s infinite;
+    }
+
+
+    @keyframes bounce {
+      0% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-4px);
+      }
+
+      100% {
+        transform: translateY(0);
+      }
+    }
+
+    h1 {
+      color: #ffffff;
+      margin-bottom: 10px;
+    }
+
+    .chat-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 600px;
+      height: 500px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-box {
+      flex-grow: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .msg {
+      max-width: 75%;
+      margin-bottom: 10px;
+      padding: 10px 15px;
+      border-radius: 16px;
+      line-height: 1.4;
+    }
+
+    .user {
+      background-color: #d0ebff;
+      align-self: flex-end;
+      border-bottom-right-radius: 0;
+    }
+
+    .bot {
+      background-color: #d3f9d8;
+      align-self: flex-start;
+      border-bottom-left-radius: 0;
+    }
+
+    .input-area {
+      display: flex;
+      padding: 12px;
+      border-top: 1px solid #eee;
+      gap: 10px;
+    }
+
+    .input-area input {
+      flex-grow: 1;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    .input-area button {
+      background-color: #00a86b;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .input-area button:hover {
+      background-color: #008f5a;
+    }
+
+    .typing {
+      font-style: italic;
+      color: #888;
+      margin-top: 5px;
+      font-size: 14px;
+    }
+
+    .voice-button {
+      background-color: #ff9800;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin-left: 10px;
+    }
+
+    .voice-button:hover {
+      background-color: #e68900;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>🎣 Michel CASPER – Chat Anti-Arnaque</h1>
+  <button onclick="resetMichel()"
+    style="margin-bottom: 20px; background:#dc3545; color:white; padding:10px 16px; border:none; border-radius:8px; cursor:pointer;">🧹
+    Réinitialiser Michel</button>
+  <div id="avatar-container" style="margin-bottom: 20px;">
+    <img id="michel-avatar" src="antiscam.png" alt="Michel" width="320" />
+  </div>
+
+  <div class="chat-container">
+    <div class="chat-box" id="chatBox"></div>
+    <div class="input-area">
+      <input type="text" id="msgInput" placeholder="Entrez le message de l'escroc" />
+      <button onclick="sendMessage()">Envoyer</button>
+      <button class="voice-button" onclick="startVoiceRecognition()">🎤</button>
+      <button class="stop-button" onclick="stopAudio()">⏹️ Arrêter l'audio</button>
+
+    </div>
+  </div>
+
+  <script>
+
+    function resetMichel() {
+      fetch("http://localhost:5000/reset", { method: "POST" })
+        .then(() => {
+          document.getElementById("chatBox").innerHTML = "";
+          stopAudio(); // optionnel : coupe la voix s’il parle encore
+          alert("Michel a oublié tout ce qu’il savait !");
+        })
+        .catch(err => {
+          console.error("Erreur de réinitialisation :", err);
+          alert("Impossible de réinitialiser Michel.");
+        });
+    }
+
+    // Fonction pour envoyer un message
+    async function sendMessage() {
+      const input = document.getElementById("msgInput");
+      const chatBox = document.getElementById("chatBox");
+      const message = input.value.trim();
+      if (!message) return;
+
+      chatBox.innerHTML += `<div class="msg user">${message}</div>`;
+      chatBox.innerHTML += `<div class="typing" id="typing">Michel réfléchit...</div>`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+      input.value = "";
+      console.log("Message envoyé :", message);
+      if (message.includes("ciel")) {
+        var audio = new Audio('./test.mp3'); // Remplacer 'key.mp3' par le chemin vers ton fichier
+        audio.play();
+      }
+
+      try {
+        const res = await fetch("http://localhost:5000/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message })
+        });
+
+        const data = await res.json();
+        document.getElementById("typing").remove();
+        chatBox.innerHTML += `<div class="msg bot">${data.reply}</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // Lire la réponse de Michel
+        readTextAloud(data.reply);
+      } catch (err) {
+        document.getElementById("typing").remove();
+        chatBox.innerHTML += `<div class="msg bot" style="color:red;">Erreur : ${err.message}</div>`;
+      }
+    }
+
+    let recognition = null;
+    let isListening = false;
+
+    // Toggle reconnaissance vocale
+    function startVoiceRecognition() {
+      if (!('webkitSpeechRecognition' in window)) {
+        alert("La reconnaissance vocale n'est pas supportée par votre navigateur.");
+        return;
+      }
+
+      if (!recognition) {
+        recognition = new webkitSpeechRecognition();
+        recognition.lang = 'fr-FR';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          document.getElementById("msgInput").value = transcript;
+          stopAudio(); // ⛔ couper Michel dès que tu parles
+          sendMessage();
+        };
+
+        recognition.onerror = (event) => {
+          console.error("Erreur de reconnaissance vocale : ", event.error);
+        };
+
+        recognition.onend = () => {
+          if (isListening) recognition.start(); // Boucle continue si actif
+        };
+        recognition.onstart = () => {
+          stopAudio(); // 🛑 coupe Michel dès qu'une voix est détectée
+        };
+
+      }
+
+      // toggle
+      if (!isListening) {
+        recognition.start();
+        isListening = true;
+        document.querySelector(".voice-button").textContent = "⏹️";
+      } else {
+        recognition.stop();
+        isListening = false;
+        document.querySelector(".voice-button").textContent = "🎤";
+      }
+    }
+
+    let synth = window.speechSynthesis;
+    let currentUtterance = null;
+    let currentAudio = null; // si jamais tu remets du backend audio plus tard
+
+    function readTextAloud(text) {
+      fetch("http://localhost:5000/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      })
+        .then(response => {
+          if (!response.ok) throw new Error("Erreur lors de la génération vocale");
+          return response.blob();
+        })
+        .then(blob => {
+          stopAudio(); // stop avant de jouer un nouveau
+
+          // Change l'image pour la version "talking"
+          const michelAvatar = document.getElementById("michel-avatar");
+          michelAvatar.classList.add("talking");
+          michelAvatar.src = "antiscam_talking.png";
+
+          const audioUrl = URL.createObjectURL(blob);
+          currentAudio = new Audio(audioUrl);
+
+          currentAudio.play();
+          currentAudio.onended = () => {
+            michelAvatar.classList.remove("talking");
+            michelAvatar.src = "antiscam.png"; // Revenir à l’image normale
+          };
+        })
+        .catch(err => {
+          console.error("Erreur TTS :", err);
+          const michelAvatar = document.getElementById("michel-avatar");
+          michelAvatar.classList.remove("talking");
+          michelAvatar.src = "antiscam.png";
+        });
+    }
+
+
+
+
+    function stopAudio() {
+      if (synth.speaking || synth.pending) {
+        synth.cancel();
+      }
+
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
+
+      const michelAvatar = document.getElementById("michel-avatar");
+      michelAvatar.classList.remove("talking");
+      michelAvatar.src = "antiscam.png";
+    }
+
+
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      document.getElementById("msgInput").value = transcript;
+      stopAudio(); // 🛑 coupe Michel dès que tu parles
+      sendMessage();
+    };
+
+
+    // Activer l'envoi avec Enter
+    document.getElementById("msgInput").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") sendMessage();
+    });
+  </script>
+</body>
+
+</html>
