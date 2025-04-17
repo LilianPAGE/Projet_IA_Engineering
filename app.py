@@ -16,8 +16,7 @@ if not os.path.exists(tmp_dir):
     os.makedirs(tmp_dir)
 
 # Utilisation de la clé Google Cloud à partir des variables d'environnement
-google_cloud_key = os.getenv("GOOGLE_CLOUD_KEY")  # Récupérer la clé depuis le fichier .env
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = google_cloud_key  # Définir la clé dans l'environnement
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "google_cloud_key.json"
 
 app = Flask(__name__)
 CORS(app)

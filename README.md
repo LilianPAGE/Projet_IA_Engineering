@@ -7,6 +7,7 @@ pip install --upgrade google-cloud-texttospeech
 pip install google-cloud-texttospeech
 
 pip install huggingface_hub
+pip install python-dotenv
 
 Ajouter une api key nebius dans le fichier config.json
 
